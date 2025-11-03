@@ -1,8 +1,11 @@
-// components/marketing/Header.tsx
+// src/components/marketing/Header.tsx
+// Fixed dark mode: Apply class immediately in load useEffect. Changed "Log in" to Link to /login page.
+
 'use client';
 
 import { Menu, X, ArrowRight, Moon, Sun } from "lucide-react";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -19,15 +22,23 @@ export default function Header() {
     }
   }, [darkMode]);
 
-  // Load saved preference on mount
+  // Load saved preference on mount – FIXED: Apply class immediately
   useEffect(() => {
     const saved = localStorage.getItem("darkMode");
     if (saved !== null) {
-      setDarkMode(saved === "true");
+      const isDark = saved === "true";
+      setDarkMode(isDark);
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
     } else {
-      // Optional: respect system preference
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       setDarkMode(prefersDark);
+      if (prefersDark) {
+        document.documentElement.classList.add("dark");
+      }
     }
   }, []);
 
@@ -69,7 +80,7 @@ export default function Header() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
-            {/* DARK MODE TOGGLE – NOW FULLY FUNCTIONAL */}
+            {/* DARK MODE TOGGLE */}
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -82,12 +93,13 @@ export default function Header() {
               )}
             </button>
 
-            <a
-              href="#"
+            {/* FIXED: Changed to Link for redirect to /login */}
+            <Link
+              href="/login"
               className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white text-sm font-medium px-4 py-2 transition-colors"
             >
               Log in
-            </a>
+            </Link>
 
             <a
               href="#"
@@ -122,9 +134,10 @@ export default function Header() {
                 </a>
               ))}
               <div className="pt-4 pb-3 border-t dark:border-gray-700">
-                <a href="#" className="block px-3 py-2 text-gray-700 dark:text-gray-300 font-medium mb-2">
+                {/* FIXED: Changed to Link for redirect to /login */}
+                <Link href="/login" className="block px-3 py-2 text-gray-700 dark:text-gray-300 font-medium mb-2">
                   Log in
-                </a>
+                </Link>
 
                 {/* Mobile Dark Mode Toggle */}
                 <button
