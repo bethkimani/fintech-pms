@@ -1,6 +1,3 @@
-// src/components/auth/VerifyResetCode.tsx
-// FIXED: Renamed file to VerifyResetCode.tsx to match import. Added missing imports.
-
 import { TextField, Box, Typography, Button } from '@mui/material';
 import { CircularProgress } from '@mui/material';
 

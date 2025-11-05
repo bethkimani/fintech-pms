@@ -1,6 +1,4 @@
 // src/components/marketing/HeroSection.tsx
-// FIXED: Changed "Login" to Link for redirect to /login. Removed modal state/render.
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,6 +10,7 @@ export default function HeroSection(): JSX.Element {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  // Auto carousel
   useEffect(() => {
     const interval = setInterval(() => {
       setIsTransitioning(true);
@@ -23,22 +22,43 @@ export default function HeroSection(): JSX.Element {
     return () => clearInterval(interval);
   }, [images.length]);
 
+  // Dynamic left border height
+  useEffect(() => {
+    const updateBorder = () => {
+      const desc = document.getElementById("description-end");
+      const border = document.getElementById("left-border");
+      if (desc && border) {
+        const rect = desc.getBoundingClientRect();
+        const parentRect = border.parentElement?.getBoundingClientRect();
+        if (parentRect) {
+          const height = rect.bottom - parentRect.top + 16;
+          border.style.height = `${height}px`;
+        }
+      }
+    };
+
+    updateBorder();
+    window.addEventListener("resize", updateBorder);
+    return () => window.removeEventListener("resize", updateBorder);
+  }, []);
+
   return (
     <section className="py-16 md:py-24 bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* HERO CARD */}
         <div className="relative bg-white dark:bg-gray-800 shadow-lg overflow-hidden rounded-2xl">
-          <div className="absolute left-0 right-0 top-0 h-2 bg-gray-200 dark:bg-gray-700" />
+          {/* TOP GRAY BORDER — 20px THICK */}
+          <div className="absolute left-0 right-0 top-0 h-5 bg-gray-300 dark:bg-gray-700" />
 
           <div className="relative p-8 md:p-12">
+            {/* LEFT GRAY BORDER — 20px THICK */}
             <div
-              className="absolute left-0 top-0 w-2 bg-gray-200 dark:bg-gray-700"
-              style={{
-                height: `calc(100% - 100%)`,
-                transition: "height 0.1s",
-              }}
               id="left-border"
+              className="absolute left-0 top-0 w-5 bg-gray-300 dark:bg-gray-700 transition-height duration-100"
+              style={{ height: "100px" }} // fallback
             />
 
+            {/* LAUNCHING SOON */}
             <div className="flex justify-center mb-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-medium">
                 <span className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse" />
@@ -46,6 +66,7 @@ export default function HeroSection(): JSX.Element {
               </div>
             </div>
 
+            {/* HEADING */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight text-center">
               Elevate Your Workflow with
               <br />
@@ -54,24 +75,21 @@ export default function HeroSection(): JSX.Element {
               System
             </h1>
 
+            {/* EXACT FIGMA PARAGRAPH */}
             <p
-              className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed text-center"
               id="description-end"
+              className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed text-center"
             >
-              The all-in-one platform that helps teams collaborate, automate, and deliver exceptional results.
-              Streamline your processes and focus on what matters most.
+              The all-in-one platform that helps teams collaborate, automate, and deliver exceptional results. Streamline your processes and focus on what matters most.
             </p>
 
+            {/* CTA BUTTONS */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-blue-700 text-white text-lg font-medium py-4 px-8 rounded-full shadow-sm transition-colors"
-              >
+              <button className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-blue-700 text-white text-lg font-medium py-4 px-8 rounded-full shadow-sm transition-colors">
                 Get Started
                 <ArrowRight className="ml-1 w-5 h-5" />
               </button>
 
-              {/* FIXED: Changed to Link for redirect to /login */}
               <Link
                 href="/login"
                 className="inline-flex items-center justify-center gap-2 border border-primary text-primary hover:bg-blue-50 dark:hover:bg-gray-700 text-lg font-medium py-4 px-8 rounded-full bg-transparent transition-colors"
@@ -80,6 +98,7 @@ export default function HeroSection(): JSX.Element {
               </Link>
             </div>
 
+            {/* CHECKMARKS */}
             <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-10">
               <span className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-600 dark:text-green-400" /> No credit card
@@ -93,6 +112,7 @@ export default function HeroSection(): JSX.Element {
             </div>
           </div>
 
+          {/* IMAGE CAROUSEL */}
           <div className="relative w-full px-8 pb-8">
             <div className="relative w-full aspect-[5/3] rounded-2xl overflow-hidden shadow-inner border-8 border-gray-200 dark:border-gray-700 bg-gray-300 dark:bg-gray-800">
               <div
@@ -101,7 +121,6 @@ export default function HeroSection(): JSX.Element {
                 }`}
                 style={{ backgroundImage: `url(${images[currentImageIndex]})` }}
               />
-
               <div
                 className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
                   isTransitioning ? "opacity-100" : "opacity-0"
@@ -109,6 +128,7 @@ export default function HeroSection(): JSX.Element {
                 style={{ backgroundImage: `url(${images[(currentImageIndex + 1) % images.length]})` }}
               />
 
+              {/* DOTS */}
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
                 {images.map((_, index) => (
                   <button
@@ -125,30 +145,22 @@ export default function HeroSection(): JSX.Element {
                         ? "bg-white dark:bg-gray-300 w-8"
                         : "bg-white/50 dark:bg-gray-500/50 w-2 hover:bg-white/75 dark:hover:bg-gray-400"
                     }`}
+                    aria-label={`Slide ${index + 1}`}
                   />
                 ))}
               </div>
             </div>
           </div>
+        </div>
 
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-              const updateBorder = () => {
-                const desc = document.getElementById('description-end');
-                const border = document.getElementById('left-border');
-                if (desc && border) {
-                  const rect = desc.getBoundingClientRect();
-                  const parentRect = border.parentElement.getBoundingClientRect();
-                  const height = rect.bottom - parentRect.top + 16;
-                  border.style.height = height + 'px';
-                }
-              };
-              updateBorder();
-              window.addEventListener('resize', updateBorder);
-            `,
-            }}
-          />
+        {/* WHAT MATTERS MOST — BELOW CARD */}
+        <div className="mt-16 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            What Matters Most
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+            We focus on results, not just activity. Track progress, align goals, and celebrate wins — all in one place.
+          </p>
         </div>
       </div>
     </section>

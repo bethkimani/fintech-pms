@@ -1,6 +1,3 @@
-// src/components/auth/LoginForm.tsx
-// FIXED: Added missing useState import for showPassword.
-
 import { useState } from 'react';
 import { TextField, Box, Typography, Button, FormControlLabel, InputAdornment, IconButton } from '@mui/material';
 import { Eye, EyeOff } from 'lucide-react';

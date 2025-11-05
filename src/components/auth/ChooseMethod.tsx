@@ -1,6 +1,3 @@
-// src/components/auth/ChooseMethod.tsx
-// Separated: Choose MFA method step.
-
 import { Box, Typography, Button, FormControl, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import { MessageCircle, Mail, Smartphone } from 'lucide-react';
 

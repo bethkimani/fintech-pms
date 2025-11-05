@@ -1,6 +1,3 @@
-// src/components/auth/VerifyCode.tsx
-// FIXED: Created missing VerifyCode component. Ensure file is saved as VerifyCode.tsx.
-
 import { Box, Typography, Button, TextField } from '@mui/material';
 import { CircularProgress } from '@mui/material';
 

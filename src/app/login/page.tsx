@@ -1,61 +1,53 @@
-// src/app/login/page.tsx
-// Fixed: Added missing useState import. Ensured all component imports match file names.
-
+// app/login/page.tsx
 'use client';
 
 import { useState } from 'react';
-import { Box, Typography, Divider, Alert, Stepper, Step, StepLabel, Button, CircularProgress } from '@mui/material';
-import { ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import {
+  Dialog, DialogContent, Box, IconButton, Typography
+} from '@mui/material';
+import { X as CloseIcon } from 'lucide-react';
 import LoginForm from '@/components/auth/LoginForm';
 import ChooseMethod from '@/components/auth/ChooseMethod';
 import VerifyCode from '@/components/auth/VerifyCode';
 import ForgotPassword from '@/components/auth/ForgotPassword';
-import VerifyResetCode from '@/components/auth/VerifyResetCode'; // FIXED: Renamed import to match file
+import VerifyResetCode from '@/components/auth/VerifyResetCode';
 import ResetPassword from '@/components/auth/ResetPassword';
 import { login, initiateMFA, verifyMFA, forgotPassword, verifyResetCode, resetPassword } from '@/lib/api';
-
-const steps = ['Sign In', 'Choose Method', 'Verify Code'];
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [activeStep, setActiveStep] = useState(0);
+  const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mfaMethod, setMfaMethod] = useState<'sms' | 'email' | 'app'>('sms');
   const [verificationCode, setVerificationCode] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isForgotFlow, setIsForgotFlow] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  const handleClose = () => {
+    // Redirect back to home on close
+    router.push('/');
+  };
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      setError('Please enter email and password');
-      return;
-    }
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
-      const response = await login(email, password);
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      const res = await login(email, password);
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('user', JSON.stringify(res.user));
       router.push('/dashboard');
-      router.refresh();
     } catch (err: any) {
-      console.error('Login error:', err);
       if (err.message === 'MFA_REQUIRED') {
-        setActiveStep(1);
-        try {
-          await initiateMFA(email);
-        } catch (initErr) {
-          console.error('MFA init error:', initErr);
-        }
+        await initiateMFA(email);
+        setStep(1);
       } else {
-        setError(err.message || 'Login failed. Please try again.');
+        setError(err.message || 'Login failed');
       }
     } finally {
       setLoading(false);
@@ -63,137 +55,73 @@ export default function LoginPage() {
   };
 
   const handleVerifyMFA = async () => {
-    if (!verificationCode || verificationCode.length < 6) {
-      setError('Please enter a valid 6-digit verification code');
-      return;
-    }
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
-      const response = await verifyMFA('mock-mfa-token', verificationCode);
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      const res = await verifyMFA('mock-mfa-token', verificationCode);
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('user', JSON.stringify(res.user));
       router.push('/dashboard');
-      router.refresh();
     } catch (err: any) {
-      console.error('MFA verify error:', err);
-      setError(err.message || 'Verification failed. Please try again.');
+      setError(err.message || 'Invalid code');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!resetEmail) {
-      setError('Please enter email');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    try {
-      await forgotPassword(resetEmail);
-      setActiveStep(1);
-      setIsForgotFlow(true);
-    } catch (err: any) {
-      console.error('Forgot password error:', err);
-      setError(err.message || 'Failed to send reset link.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyResetCode = async () => {
-    if (!resetCode || resetCode.length < 6) {
-      setError('Please enter a valid 6-digit reset code');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    try {
-      await verifyResetCode(resetEmail, resetCode);
-      setActiveStep(2);
-    } catch (err: any) {
-      console.error('Reset code verify error:', err);
-      setError(err.message || 'Invalid reset code.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    try {
-      await resetPassword(resetEmail, newPassword);
-      setActiveStep(0);
-      setIsForgotFlow(false);
-      setResetEmail('');
-      setError('');
-      alert('Password reset successfully. Please log in with your new password.');
-    } catch (err: any) {
-      console.error('Reset password error:', err);
-      setError(err.message || 'Failed to reset password.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStepContent = () => {
-    if (isForgotFlow) {
-      switch (activeStep) {
-        case 0:
-          return <ForgotPassword resetEmail={resetEmail} setResetEmail={setResetEmail} handleForgotPassword={handleForgotPassword} loading={loading} error={error} setIsForgotFlow={setIsForgotFlow} />;
-        case 1:
-          return <VerifyResetCode resetCode={resetCode} setResetCode={setResetCode} handleVerifyResetCode={handleVerifyResetCode} loading={loading} error={error} setActiveStep={setActiveStep} />;
-        case 2:
-          return <ResetPassword newPassword={newPassword} setNewPassword={setNewPassword} confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword} handleResetPassword={handleResetPassword} loading={loading} error={error} setActiveStep={setActiveStep} />;
-        default:
-          return null;
-      }
-    }
-
-    switch (activeStep) {
+  const renderStep = () => {
+    switch (step) {
       case 0:
-        return <LoginForm email={email} setEmail={setEmail} password={password} setPassword={setPassword} handleLogin={handleLogin} loading={loading} error={error} setIsForgotFlow={setIsForgotFlow} />;
+        return <LoginForm email={email} setEmail={setEmail} password={password} setPassword={setPassword} handleLogin={handleLogin} loading={loading} error={error} setIsForgotFlow={() => setStep(3)} />;
       case 1:
-        return <ChooseMethod mfaMethod={mfaMethod} setMfaMethod={setMfaMethod} setActiveStep={setActiveStep} />;
+        return <ChooseMethod mfaMethod={mfaMethod} setMfaMethod={setMfaMethod} setActiveStep={() => setStep(2)} />;
       case 2:
-        return <VerifyCode verificationCode={verificationCode} setVerificationCode={setVerificationCode} mfaMethod={mfaMethod} handleVerifyMFA={handleVerifyMFA} loading={loading} error={error} setActiveStep={setActiveStep} />;
-      default:
-        return null;
+        return <VerifyCode verificationCode={verificationCode} setVerificationCode={setVerificationCode} mfaMethod={mfaMethod} handleVerifyMFA={handleVerifyMFA} loading={loading} error={error} setActiveStep={setStep} />;
+      case 3:
+        return <ForgotPassword resetEmail={resetEmail} setResetEmail={setResetEmail} handleForgotPassword={async () => {
+          setLoading(true); setError('');
+          try {
+            await forgotPassword(resetEmail);
+            setStep(4);
+          } catch (e: any) { setError(e.message); } finally { setLoading(false); }
+        }} loading={loading} error={error} setIsForgotFlow={() => setStep(0)} />;
+      case 4:
+        return <VerifyResetCode resetCode={resetCode} setResetCode={setResetCode} handleVerifyResetCode={async () => {
+          setLoading(true); setError('');
+          try {
+            await verifyResetCode(resetEmail, resetCode);
+            setStep(5);
+          } catch (e: any) { setError(e.message); } finally { setLoading(false); }
+        }} loading={loading} error={error} setActiveStep={setStep} />;
+      case 5:
+        return <ResetPassword newPassword={newPassword} setNewPassword={setNewPassword} confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword} handleResetPassword={async () => {
+          if (newPassword !== confirmPassword) return setError('Passwords do not match');
+          setLoading(true); setError('');
+          try {
+            await resetPassword(resetEmail, newPassword);
+            setError('Password reset! You can now log in.');
+            setStep(0);
+          } catch (e: any) { setError(e.message); } finally { setLoading(false); }
+        }} loading={loading} error={error} setActiveStep={setStep} />;
+      default: return null;
     }
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3, backgroundColor: 'grey.50' }}>
-      <Box sx={{ maxWidth: 400, width: '100%' }}>
-        <Button startIcon={<ArrowLeft />} onClick={() => router.push('/')} sx={{ mb: 3 }}>
-          Back to Home
-        </Button>
-        <Box sx={{ p: 4, backgroundColor: 'white', borderRadius: 2, boxShadow: 1 }}>
-          <Typography variant="h4" align="center" gutterBottom>
-            SecureAuth
-          </Typography>
-          {!isForgotFlow && (
-            <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-          )}
-          {getStepContent()}
-        </Box>
-      </Box>
+    <Box sx={{ display: 'flex', minHeight: '100vh', background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', justifyContent: 'center', alignItems: 'center' }}>
+      {/* Modal always open on this page */}
+      <Dialog open={true} onClose={handleClose} maxWidth="sm" fullWidth>
+        <DialogContent sx={{ p: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Typography variant="h6" sx={{ flex: 1 }}>
+              {step === 0 ? 'Welcome Back' : step === 1 ? 'Choose MFA' : step === 2 ? 'Verify Code' : step === 3 ? 'Forgot Password' : step === 4 ? 'Verify Code' : 'Reset Password'}
+            </Typography>
+            <IconButton onClick={handleClose}><CloseIcon /></IconButton>
+          </Box>
+          <Box sx={{ p: 3 }}>
+            {renderStep()}
+          </Box>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

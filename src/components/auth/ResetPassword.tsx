@@ -1,6 +1,3 @@
-// src/components/auth/ResetPassword.tsx
-// Separated: Reset password step.
-
 import { TextField, Box, Typography, Button } from '@mui/material';
 import { CircularProgress } from '@mui/material';
 
